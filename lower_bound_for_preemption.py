@@ -151,9 +151,6 @@ accum_lst = [0]*(T*T)
 
 for t in range(0,len(edge_vectors_lst)):
 	accum_lst += edge_vectors_lst[t]
-print("This is my accum list")
-print(accum_lst)
-print("now I will print all my constraints")
 
 
 
@@ -168,8 +165,14 @@ for t in range(0,T):
 		# here I will make the modification of the edges
 		for j in range(i*T + (t+1) , i*T + T):
 			v[j] = 0
-	print("time = ", t)
-	print(v)
+	
+	A_comp_constraints.append(v)
+
+
+A_comp_constraints = np.array(A_comp_constraints)
+print(A_comp_constraints)
+exit()
+
 
 
 
@@ -226,7 +229,6 @@ for t in range(0,T):
 
 
 
-A_comp_constraints = np.array(A_comp_constraints)
 
 
 
