@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import maximum_matching as mm
+from scipy.optimize import linprog
 
 
 
@@ -105,10 +106,8 @@ with open("preemption_input.txt", 'r') as f:
 
 
 
-
-
+##################   DEGREE CONSTRAINTS ######################
 #here I will construct the degree constraint of each vertex
-
 A_degree_constraints = []
 #degree constraints for left vertexes
 for V in left_vertexes_list:
@@ -128,30 +127,45 @@ for V in right_vertexes_list:
 	A_degree_constraints.append(row_to_add)
 #turn list of lists that represent the degree constarints into a numpy matrix
 A_degree_constraints = np.array(A_degree_constraints)
+print( A_degree_constraints)
+exit()
+
+
+
+# we want an additional coloumn of zeros in order that represent the terms that are multiplied to the competitiveness ratio
+c1 = np.zeros((A_degree_constraints.shape[0], 1))
+#this final submatrix which represent the degree constraints of the vertexes has the correct sign
+A_degree_constraints = np.hstack((A_degree_constraints, c1))
 
 
 
 
 
 
+##################   NONNEGATIVITY EDGE  CONSTRAINTS ######################
 # let e \in T and t(e) be the arrival time of the edge e, then the nonnegativity constraint of each edge can be formulated as:
 #								z_e_t(e) - z_e_(t(e)+1) - z_e_(t(e)+2)-...- z_e_T >=0 \forall e \in E
 A_nonneg_edge_constraint = [] 
 for t in range(0,T):
-	A_nonneg_edge_constraint.append(-edge_vectors_lst[t])
+	A_nonneg_edge_constraint.append(edge_vectors_lst[t])
 A_nonneg_edge_constraint = np.array(A_nonneg_edge_constraint)
+#this final submatrix which represent the nonnegativity of the edge weight  constraints has  incorrect sign
+A_nonneg_edge_constraint = - A_nonneg_edge_constraint
+# we want an additional coloumn of zeros in order that represent the terms that are multiplied to the competitiveness ratio
+c2 = np.zeros((A_nonneg_edge_constraint.shape[0], 1))
+A_nonneg_edge_constraint = np.hstack((A_nonneg_edge_constraint, c2))
 
 
 
 
-
+##################   COMPETITIVENESS CONSTRAINTS ######################
 #here I will construct the competitiveness constraints
 A_comp_constraints = []
 accum_lst = [0]*(T*T)
 
+
 for t in range(0,len(edge_vectors_lst)):
 	accum_lst += edge_vectors_lst[t]
-
 
 
 for t in range(0,T):
@@ -165,12 +179,68 @@ for t in range(0,T):
 		# here I will make the modification of the edges
 		for j in range(i*T + (t+1) , i*T + T):
 			v[j] = 0
-	
 	A_comp_constraints.append(v)
 
 
-A_comp_constraints = np.array(A_comp_constraints)
-print(A_comp_constraints)
+#this final submatrix which represent a part of the competitiveness constraints (it does not have the last coloumn which is competitiveness ration coloumn) has the wrong sign 
+A_comp_constraints = - np.array(A_comp_constraints)
+
+#now I have to calculate the size of the matching in after each edge addition
+
+matchings_size = np.zeros((len(edges_lst), 1))
+for i in range(0,len(edges_lst)):
+	bpGraph  = mm.list_to_adj_matrix(edges_lst[:i+1], num_vtxs)
+	g = mm.GFG(bpGraph) 
+	matchings_size[i] = g.maxBPM()
+
+
+A_comp_constraints = np.hstack((A_comp_constraints, matchings_size))
+
+
+
+#print("-"*10)
+#print(A_degree_constraints)
+#print("-"*10)
+#print(A_nonneg_edge_constraint)
+#print("-"*10)
+#print(A_comp_constraints)
+#print("-"*10)
+A = np.vstack(( A_degree_constraints , A_nonneg_edge_constraint, A_comp_constraints))
+
+print("A shape is ", A.shape)
+print(A)
+
+c = np.zeros(T*T+1)
+c[-1] = -1
+
+num_edges , num_vtxs
+b = np.zeros(2*num_vtxs + num_edges + num_edges)
+for i in range(0, 2*num_vtxs):
+	b[i] = 1
+print(b)
+print(c)
+print(" b shape is ", b.shape)
+print(" c shape is ", c.shape)
+res = linprog(c, A_ub=A, b_ub=b,  options={"disp": True})
+print(res)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 exit()
 
 
@@ -223,19 +293,6 @@ exit()
 #
 #	print("I finished time ", t)
 #	print("-"*10)
-#
-
-
-
-
-
-
-
-
-for i in range(0,len(edges_lst)):
-	bpGraph  = mm.list_to_adj_matrix(edges_lst[:i+1], num_vtxs)
-	g = mm.GFG(bpGraph) 
-	g.maxBPM()
 
 
 
@@ -246,17 +303,8 @@ for i in range(0,len(edges_lst)):
 
 
 
-exit()
 
-for t in range(0,T):
-	print("-"*10)
-	print(t)
-	print(edge_vectors_lst[t])
-	print("-"*10)
 
-exit()
 
-for V in left_vertexes_list:
-	print("-"*10)
-	V.print()
-	print("-"*10)
+
+
