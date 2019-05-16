@@ -1,18 +1,23 @@
 # Python program to find 
 # maximal Bipartite matching. 
+import numpy as np
 
 
 
-
-def list_to_adj_matrix(list_of_edges):
-''' this is a function that takes as input a list of edges 
-    and outputs the adjajency matrix of this graph
-    Note: THE GRAPH IS ASSUME TO BE BIPARTITE
-    that means that an edge [2,3] in the list of edges denotes
-    an edge between L(2) and R(3) (where L and R denote the left
-    and right part of the bipartite graph respectively'''
-
-    
+def list_to_adj_matrix(list_of_edges, num_vtxs):
+#''' this is a function that takes as input a list of edges,
+#    and the number of vertexes in each side of the graph
+#    and outputs the adjajency matrix of this graph
+#    Note: THE GRAPH IS ASSUME TO BE BIPARTITE
+#    that means that an edge [2,3] in the list of edges denotes
+#    an edge between L(2) and R(3) (where L and R denote the left
+#    and right part of the bipartite graph respectively'''
+	A = np.zeros((2*num_vtxs, 2*num_vtxs))
+	for e in list_of_edges:
+		vL = e[0]
+		vR = e[1]
+		A[vL, num_vtxs + vR] = 1
+	return A
 
 
 
@@ -75,9 +80,16 @@ class GFG:
 
 
 
-
-bpGraph = [[,0],[0,1]]
-
+#edge_lst = [[0, 0],
+#	   [0, 1],
+#           [1, 0],
+#           [1, 2],
+#           [2, 1]]
+#num_vtxs = 3
+#for i in range(0,len(edge_lst)):
+#	bpGraph  = list_to_adj_matrix(edge_lst[:i+1], num_vtxs)
+#	g = GFG(bpGraph) 
+#	print ("Maximum number of applicants that can get job is %d " % g.maxBPM()) 
 #bpGraph =[[0, 1, 1, 0, 0, 0], 
 #		[1, 0, 0, 1, 0, 0], 
 #		[0, 0, 1, 0, 0, 0], 
@@ -85,9 +97,7 @@ bpGraph = [[,0],[0,1]]
 #		[0, 0, 0, 0, 0, 0], 
 #		[0, 0, 0, 0, 0, 1]] 
 
-g = GFG(bpGraph) 
 
-print ("Maximum number of applicants that can get job is %d " % g.maxBPM()) 
 
 # This code is contributed by Neelam Yadav 
 
