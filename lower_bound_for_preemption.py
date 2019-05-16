@@ -83,15 +83,15 @@ with open("preemption_input.txt", 'r') as f:
 			#create or update (depending if the vertex already appeared) his object and update the list
 			if left_seen[vL] == 0:
 				left_vertexes_list[vL].add_edge(e)
-				left_seen[vR] = 1
+				left_seen[vL] = 1
 			else:
 				left_vertexes_list[vL].add_edge(e)
 			#########################################
 			if right_seen[vR] == 0:
-				right_vertexes_list[vL].add_edge(e)
+				right_vertexes_list[vR].add_edge(e)
 				right_seen[vR] = 1
 			else:
-				right_vertexes_list[vL].add_edge(e)
+				right_vertexes_list[vR].add_edge(e)
 
 
 
@@ -112,6 +112,7 @@ A_degree_constraints = []
 #degree constraints for left vertexes
 for V in left_vertexes_list:
 	adjacent_edges_arrivals = V.get_adjacent_edges()
+	#print(adjacent_edges_arrivals)
 	row_to_add = np.zeros(T*T)
 #	print(adjacent_edges_arrivals)
 	for t in adjacent_edges_arrivals:
@@ -121,14 +122,16 @@ for V in left_vertexes_list:
 #degree constraints for right vertexes
 for V in right_vertexes_list:
 	adjacent_edges_arrivals = V.get_adjacent_edges()
+	#print(adjacent_edges_arrivals)
 	row_to_add = np.zeros(T*T)
 	for t in adjacent_edges_arrivals:
 		row_to_add = row_to_add + edge_vectors_lst[t]
 	A_degree_constraints.append(row_to_add)
 #turn list of lists that represent the degree constarints into a numpy matrix
+
 A_degree_constraints = np.array(A_degree_constraints)
-print( A_degree_constraints)
-exit()
+#print( A_degree_constraints)
+#exit()
 
 
 
@@ -207,8 +210,8 @@ A_comp_constraints = np.hstack((A_comp_constraints, matchings_size))
 #print("-"*10)
 A = np.vstack(( A_degree_constraints , A_nonneg_edge_constraint, A_comp_constraints))
 
-print("A shape is ", A.shape)
-print(A)
+#print("A shape is ", A.shape)
+#print(A)
 
 c = np.zeros(T*T+1)
 c[-1] = -1
@@ -217,10 +220,10 @@ num_edges , num_vtxs
 b = np.zeros(2*num_vtxs + num_edges + num_edges)
 for i in range(0, 2*num_vtxs):
 	b[i] = 1
-print(b)
-print(c)
-print(" b shape is ", b.shape)
-print(" c shape is ", c.shape)
+#print(b)
+#print(c)
+#print(" b shape is ", b.shape)
+#print(" c shape is ", c.shape)
 res = linprog(c, A_ub=A, b_ub=b,  options={"disp": True})
 print(res)
 
