@@ -128,30 +128,103 @@ for V in right_vertexes_list:
 	A_degree_constraints.append(row_to_add)
 #turn list of lists that represent the degree constarints into a numpy matrix
 A_degree_constraints = np.array(A_degree_constraints)
-print(A_degree_constraints)
-
-
-
-exit()
 
 
 
 
-#here I will construct the constraint of the form z_e1 - z_e2 - z_e3 - ...- z_eT >= 0 \forall e \in E
+
+
+# let e \in T and t(e) be the arrival time of the edge e, then the nonnegativity constraint of each edge can be formulated as:
+#								z_e_t(e) - z_e_(t(e)+1) - z_e_(t(e)+2)-...- z_e_T >=0 \forall e \in E
 A_nonneg_edge_constraint = [] 
 for t in range(0,T):
 	A_nonneg_edge_constraint.append(-edge_vectors_lst[t])
 A_nonneg_edge_constraint = np.array(A_nonneg_edge_constraint)
 
+
+
+
+
 #here I will construct the competitiveness constraints
 A_comp_constraints = []
 accum_lst = [0]*(T*T)
-for t in range(0,T*T):
-	if t%T == 0:	
-		accum_lst[t] = 1
-	else:
-		accum_lst[t] = -1
-	A_comp_constraints.append(accum_lst[:])
+
+for t in range(0,len(edge_vectors_lst)):
+	accum_lst += edge_vectors_lst[t]
+print("This is my accum list")
+print(accum_lst)
+print("now I will print all my constraints")
+
+
+
+for t in range(0,T):
+	#t denote the particular arrival time of an edge
+	v = accum_lst.copy()
+	for i in range(0,T):
+		# we will handle the variables of each edge separately
+		# the variables of edge that arrived at time i are between the positions
+		# i*T --> i*T + (T-1)
+		
+		# here I will make the modification of the edges
+		for j in range(i*T + (t+1) , i*T + T):
+			v[j] = 0
+	print("time = ", t)
+	print(v)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#for t in range(0,T):
+#	#t denote the particular arrival time of an edge
+#	print("-"*10)
+#	v = accum_lst.copy()
+#	print("I am at time ", t)
+#	print("and my initial vector is ")
+#	print(v)
+#	print(accum_lst)
+#	#print(v)
+#	for i in range(0,T):
+#		# we will handle the variables of each edge separately
+#		# the variables of edge that arrived at time i are between the positions
+#		# i*T --> i*T + (T-1)
+#		my_str = ""
+#		for j in range(i*T , i*T + T):
+#			my_str += " "+str(v[j])
+#		#	print("I will set zero the ", j, "th coordinate ")
+#		print("variables of edge ", i, "at time ", t,"  ",  my_str)
+#		
+#		
+#		# here I will make the modification of the edges
+#		for j in range(i*T + (t+1) , i*T + T):
+#			v[j] = 0
+#
+#
+#
+#		my_str = ""
+#		for j in range(i*T , i*T + T):
+#			my_str += " "+str(v[j])
+#		#	print("I will set zero the ", j, "th coordinate ")
+#
+#		print("variables of edge ", i, "at time ", t,"  ",  my_str)
+#
+#
+#	print("I finished time ", t)
+#	print("-"*10)
+#
+
+
+
+
 
 A_comp_constraints = np.array(A_comp_constraints)
 
