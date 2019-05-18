@@ -62,6 +62,7 @@ with open("preemption_input.txt", 'r') as f:
 	for line in f.readlines():
 	#t will denote the arrival itme
 		t+=1
+		#Initialization of object vectors
 		if first_line == 0:
 			num_edges , num_vtxs = map(int, line.split())
 			T = num_edges
@@ -71,7 +72,8 @@ with open("preemption_input.txt", 'r') as f:
 			right_vertexes_list = [Vertex(i, 1, []) for i  in range(num_vtxs)]
 			first_line =1
 		else:
-		#here I create the vertexes
+		#here I create the vertexes that I have not already see, and I upgrade the list of edges adjacent to this vertex 
+		# (each edge is stored as (a,b, t) where t denote the arrival time of this edge )
 			vL, vR = map(int, line.split())
 			e = [vL, vR, t]
 			edges_lst.append(e)
@@ -100,6 +102,18 @@ with open("preemption_input.txt", 'r') as f:
 
 
 
+#here I am constructing a mask
+Mask_matrix = []
+mask = np.zeros(T*T)
+for t in range(0,T):
+	for i in range(0,T):
+		mask[i*T + t] = 1
+	Mask_matrix.append(mask.copy())
+Mask_matrix = np.array(Mask_matrix)
+
+
+
+
 
 
 
@@ -108,16 +122,20 @@ with open("preemption_input.txt", 'r') as f:
 
 ##################   DEGREE CONSTRAINTS ######################
 #here I will construct the degree constraint of each vertex
-A_degree_constraints = []
-#degree constraints for left vertexes
+#each vertex has T degree constraints, one whenever a new edge arrives.  (---> in order to have an easier impleme)
+
+A_degree_constraints = np.zeros((1, T*T))
 for V in left_vertexes_list:
 	adjacent_edges_arrivals = V.get_adjacent_edges()
-	#print(adjacent_edges_arrivals)
 	row_to_add = np.zeros(T*T)
-#	print(adjacent_edges_arrivals)
 	for t in adjacent_edges_arrivals:
 		row_to_add = row_to_add + edge_vectors_lst[t]
-	A_degree_constraints.append(row_to_add)
+	Matrix_to_add = Mask_matrix * row_to_add
+	A_degree_constraints = np.vstack((A_degree_constraints,Matrix_to_add))
+
+A_degree_constraints = np.delete(A_degree_constraints, (0), axis=0)
+
+
 
 #degree constraints for right vertexes
 for V in right_vertexes_list:
@@ -126,13 +144,15 @@ for V in right_vertexes_list:
 	row_to_add = np.zeros(T*T)
 	for t in adjacent_edges_arrivals:
 		row_to_add = row_to_add + edge_vectors_lst[t]
-	A_degree_constraints.append(row_to_add)
+	Matrix_to_add = Mask_matrix * row_to_add
+	A_degree_constraints = np.vstack((A_degree_constraints,Matrix_to_add))
+
+
 #turn list of lists that represent the degree constarints into a numpy matrix
 
 A_degree_constraints = np.array(A_degree_constraints)
 #print( A_degree_constraints)
 #exit()
-
 
 
 # we want an additional coloumn of zeros in order that represent the terms that are multiplied to the competitiveness ratio
@@ -201,24 +221,15 @@ A_comp_constraints = np.hstack((A_comp_constraints, matchings_size))
 
 
 
-#print("-"*10)
-#print(A_degree_constraints)
-#print("-"*10)
-#print(A_nonneg_edge_constraint)
-#print("-"*10)
-#print(A_comp_constraints)
-#print("-"*10)
 A = np.vstack(( A_degree_constraints , A_nonneg_edge_constraint, A_comp_constraints))
 
-#print("A shape is ", A.shape)
-#print(A)
 
 c = np.zeros(T*T+1)
 c[-1] = -1
 
-num_edges , num_vtxs
-b = np.zeros(2*num_vtxs + num_edges + num_edges)
-for i in range(0, 2*num_vtxs):
+
+b = np.zeros(2*num_vtxs*num_edges + num_edges + num_edges)
+for i in range(0, 2*num_vtxs*num_edges):
 	b[i] = 1
 #print(b)
 #print(c)
@@ -226,77 +237,6 @@ for i in range(0, 2*num_vtxs):
 #print(" c shape is ", c.shape)
 res = linprog(c, A_ub=A, b_ub=b,  options={"disp": True})
 print(res)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-exit()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#for t in range(0,T):
-#	#t denote the particular arrival time of an edge
-#	print("-"*10)
-#	v = accum_lst.copy()
-#	print("I am at time ", t)
-#	print("and my initial vector is ")
-#	print(v)
-#	print(accum_lst)
-#	#print(v)
-#	for i in range(0,T):
-#		# we will handle the variables of each edge separately
-#		# the variables of edge that arrived at time i are between the positions
-#		# i*T --> i*T + (T-1)
-#		my_str = ""
-#		for j in range(i*T , i*T + T):
-#			my_str += " "+str(v[j])
-#		#	print("I will set zero the ", j, "th coordinate ")
-#		print("variables of edge ", i, "at time ", t,"  ",  my_str)
-#		
-#		
-#		# here I will make the modification of the edges
-#		for j in range(i*T + (t+1) , i*T + T):
-#			v[j] = 0
-#
-#
-#
-#		my_str = ""
-#		for j in range(i*T , i*T + T):
-#			my_str += " "+str(v[j])
-#		#	print("I will set zero the ", j, "th coordinate ")
-#
-#		print("variables of edge ", i, "at time ", t,"  ",  my_str)
-#
-#
-#	print("I finished time ", t)
-#	print("-"*10)
-
 
 
 
